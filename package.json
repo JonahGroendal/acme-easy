@@ -1,0 +1,30 @@
+{
+  "name": "acme-easy",
+  "version": "1.0.0",
+  "description": "An ACME client for the browser that authenticates via DNS-01 challenge and supports LetsEncrypt by default.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JonahGroendal/acme-easy.git"
+  },
+  "keywords": [
+    "ACME",
+    "client",
+    "DNS",
+    "DNS-01",
+    "LetsEncrypt",
+    "browser"
+  ],
+  "author": "Jonah Groendal",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JonahGroendal/acme-easy/issues"
+  },
+  "homepage": "https://github.com/JonahGroendal/acme-easy#readme",
+  "dependencies": {
+    "node-forge": "^0.9.1"
+  }
+}
