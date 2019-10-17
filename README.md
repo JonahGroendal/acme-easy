@@ -3,6 +3,8 @@ An ACME client for the browser that authenticates via DNS-01 challenge and suppo
 
 ## Use like so:
 ```javascript
+import AcmeClient from 'acme-easy'
+
 const domainName = 'example.com';
 
 // Generate a JWK and create a new account at LetsEncrypt
@@ -28,6 +30,8 @@ console.log(`your certificate can be found at ${certUrl}`)
 
 ## Or, if you dont need persistence:
 ```javascript
+import AcmeClient from 'acme-easy'
+
 const domainName = 'example.com';
 
 const ac = await AcmeClient('letsencrypt'); // You can also use 'letsencrypt-staging' for testing
