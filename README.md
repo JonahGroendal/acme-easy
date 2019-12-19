@@ -24,8 +24,8 @@ const { jwk, order } = getStore();
 // Log back in to your account by passing its JWK to the constructor
 const ac = await AcmeClient('letsencrypt', jwk);
 // Submit, finalize, and return the signed certificate and its private key
-const { certUrl, pkcs8Key } = await ac.submitDnsChallengeAndFinalize(order);
-console.log(`your certificate can be found at ${certUrl}`)
+const { pemCertChain, pkcs8Key } = await ac.submitDnsChallengeAndFinalize(order);
+console.log(pemCertChain)
 ```
 
 ## Or, if you dont need persistence:
@@ -40,6 +40,6 @@ console.log(`set a DNS record with host: ${recordName} and TXT: ${recordText}`);
 
 /* Then set the DNS record to complete the challenge */
 
-const { certUrl, pkcs8Key } = await ac.submitDnsChallengeAndFinalize(order);
-console.log(`your certificate can be found at ${certUrl}`)
+const { pemCertChain, pkcs8Key } = await ac.submitDnsChallengeAndFinalize(order);
+console.log(pemCertChain)
 ```

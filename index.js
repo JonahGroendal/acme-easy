@@ -43,7 +43,12 @@ export default async function AcmeClient(authority, jwk=null) {
       const { csr, pkcs8Key } = generateCsr(domainName);
       let certUrl;
       ({ nonce, certUrl } = await postOrderFinalize(nonce, jwk, accountUrl, order, csr));
-      return { certUrl, pkcs8Key };
+      let pemCertChain;
+      ({ nonce, pemCertChain} = await getPemCertChain(nonce, jwk, accountUrl, certUrl))
+      return {
+        pemCertChain,
+        pkcs8Key
+      };
     },
     exportJwk() {
       return jwk;
@@ -199,7 +204,36 @@ async function postOrderFinalize(nonce, jwk, accountUrl, order, csr) {
   }
 }
 
+async function getPemCertChain(nonce, jwk, accountUrl, certUrl) {
+  const header = {
+    alg: "ES256",
+    kid: accountUrl,
+    nonce: nonce,
+    url: certUrl
+  }
+  const payload = ""
 
+  const jwt = await jwtFromJson(jwk, header, payload)
+
+  const res = await fetch(certUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/jose+json",
+      "Accept": "application/pem-certificate-chain"
+    },
+    body: JSON.stringify(parseJwt(jwt))
+  })
+
+  if (res.status >= 400)
+    throw new Error(res.statusText)
+
+  const pemCertChain = parsePemCertChain(await res.text())
+
+  return {
+    nonce: res.headers.get('Replay-Nonce'),
+    pemCertChain
+  }
+}
 
 
 async function generateJwk() {
@@ -315,4 +349,19 @@ function arrayBufferToBase64Url(buf) {
 function throwIfErrored(resJson) {
   if (typeof resJson.status === 'number' && resJson.status >= 400)
     throw new Error(resJson.detail)
+}
+
+/**
+ * @param {string} pemCertChain
+ */
+function parsePemCertChain(pemCertChain) {
+  let parsed = []
+  let startIndex = pemCertChain.indexOf('-----BEGIN CERTIFICATE-----')
+  let endIndex
+  while (startIndex !== -1) {
+    endIndex = pemCertChain.indexOf('-----END CERTIFICATE-----', startIndex) + '-----END CERTIFICATE-----'.length
+    parsed.push(pemCertChain.slice(startIndex, endIndex))
+    startIndex = pemCertChain.indexOf('-----BEGIN CERTIFICATE-----', endIndex)
+  }
+  return parsed
 }
