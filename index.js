@@ -1,11 +1,11 @@
-import forge from 'node-forge'
+const forge = require('node-forge')
 
 const authorities = {
   "letsencrypt": "https://acme-v02.api.letsencrypt.org",
   "letsencrypt-staging": "https://acme-staging-v02.api.letsencrypt.org"
 }
 
-export default async function AcmeClient(authority, jwk=null) {
+async function AcmeClient(authority, jwk=null) {
   let directory;
   let nonce;
   let accountUrl;
@@ -55,6 +55,8 @@ export default async function AcmeClient(authority, jwk=null) {
     }
   }
 }
+
+module.exports = AcmeClient
 
 async function getNewNonce(directory) {
   const res = await fetch(directory.newNonce, {

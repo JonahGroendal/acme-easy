@@ -4,7 +4,7 @@
   "description": "An ACME client for the browser that authenticates via DNS-01 challenge and supports LetsEncrypt by default.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test.js"
   },
   "repository": {
     "type": "git",
@@ -26,5 +26,10 @@
   "homepage": "https://github.com/JonahGroendal/acme-easy#readme",
   "dependencies": {
     "node-forge": "^0.9.1"
+  },
+  "devDependencies": {
+    "btoa": "^1.2.1",
+    "node-fetch": "^2.6.0",
+    "node-webcrypto-ossl": "^1.0.48"
   }
 }

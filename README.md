@@ -7,6 +7,22 @@ import AcmeClient from 'acme-easy'
 
 const domainName = 'example.com';
 
+const ac = await AcmeClient('letsencrypt'); // You can also use 'letsencrypt-staging' for testing
+const { recordName, recordText, order } = await ac.requestDnsChallenge(domainName);
+console.log(`set a DNS record with host: ${recordName} and TXT: ${recordText}`);
+
+/* Then set the DNS record to complete the challenge */
+
+const { pemCertChain, pkcs8Key } = await ac.submitDnsChallengeAndFinalize(order);
+console.log(pemCertChain)
+```
+
+## Or, if you need persistence:
+```javascript
+import AcmeClient from 'acme-easy'
+
+const domainName = 'example.com';
+
 // Generate a JWK and create a new account at LetsEncrypt
 const ac = await AcmeClient('letsencrypt'); // You can also use 'letsencrypt-staging' for testing
 // Generate and submt an new CSR then return the challenge text
@@ -24,22 +40,6 @@ const { jwk, order } = getStore();
 // Log back in to your account by passing its JWK to the constructor
 const ac = await AcmeClient('letsencrypt', jwk);
 // Submit, finalize, and return the signed certificate and its private key
-const { pemCertChain, pkcs8Key } = await ac.submitDnsChallengeAndFinalize(order);
-console.log(pemCertChain)
-```
-
-## Or, if you dont need persistence:
-```javascript
-import AcmeClient from 'acme-easy'
-
-const domainName = 'example.com';
-
-const ac = await AcmeClient('letsencrypt'); // You can also use 'letsencrypt-staging' for testing
-const { recordName, recordText, order } = await ac.requestDnsChallenge(domainName);
-console.log(`set a DNS record with host: ${recordName} and TXT: ${recordText}`);
-
-/* Then set the DNS record to complete the challenge */
-
 const { pemCertChain, pkcs8Key } = await ac.submitDnsChallengeAndFinalize(order);
 console.log(pemCertChain)
 ```
