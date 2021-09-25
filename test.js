@@ -1,8 +1,7 @@
 // import and set global polyfills
 global.fetch = require("node-fetch");
-const WebCrypto = require("node-webcrypto-ossl");
 global.window = {}
-global.window.crypto = new WebCrypto()
+global.window.crypto = require('crypto').webcrypto;
 global.window.btoa = require('btoa');
 
 
