@@ -12,7 +12,7 @@ const ac = await AcmeClient('letsencrypt'); // You can also use 'letsencrypt-sta
 const { recordName, recordText, order } = await ac.requestDnsChallenge(domainName);
 console.log(`set a DNS record with host: ${recordName} and TXT: ${recordText}`);
 
-/* Then set the DNS record to complete the challenge */
+/* Then set the DNS record and wait ~10 minutes */
 
 const { pemCertChain, pkcs8Key } = await ac.submitDnsChallengeAndFinalize(order);
 console.log(pemCertChain)
@@ -32,7 +32,7 @@ const { recordName, recordText, order } = await ac.requestDnsChallenge(domainNam
 setStore({ jwk: ac.exportJwk(), order });
 console.log(`set a DNS record with host: ${recordName} and TXT: ${recordText}`);
 
-/* Close the app and set the DNS record to complete the challenge */
+/* Close the app, set the DNS record and wait ~10 minutes */
 
 /* Then reopen the app */
 
@@ -44,3 +44,5 @@ const ac = await AcmeClient('letsencrypt', jwk);
 const { pemCertChain, pkcs8Key } = await ac.submitDnsChallengeAndFinalize(order);
 console.log(pemCertChain)
 ```
+
+tests requrire >=Nodev16
