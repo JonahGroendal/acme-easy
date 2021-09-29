@@ -1,3 +1,4 @@
+![tests](https://github.com/JonahGroendal/acme-easy/actions/workflows/node.js.yml/badge.svg)
 # acme-easy
 An ACME client for the browser that authenticates via DNS-01 challenge and supports LetsEncrypt by default.
 
