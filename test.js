@@ -10,8 +10,14 @@ const setTimeout = require('timers/promises').setTimeout
 const { run, test } = require('./runTests.js')
 const AcmeClient = require('./index.js')
 
+let apiToken = require('./cloudfare.json')
+try {
+  apiToken = require('./cloudfare.json').token
+} catch {
+  // If CI, token will be environment variable set by the github action
+  apiToken = process.env.CLOUDFARE_API_TOKEN
+}
 
-let apiToken = process.env.CLOUDFARE_API_TOKEN
 
 run(() => {
   test('should create an AcmeClient object', async () => {
