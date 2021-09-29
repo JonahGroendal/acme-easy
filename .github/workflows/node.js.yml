@@ -37,5 +37,5 @@ jobs:
     - name: Run Tests
       run: npm run test
       env:
-      - CI: true
+        CI: true
         CLOUDFARE_API_TOKEN: ${{ secrets.CLOUDFARE_API_TOKEN }}
