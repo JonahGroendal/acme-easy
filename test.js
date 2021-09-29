@@ -22,7 +22,7 @@ run(() => {
     const ac = await AcmeClient('letsencrypt-staging')
     const { recordName, recordText, order } = await ac.requestDnsChallenge('website.com');
 
-    assert.equal(recordName, '_acme-challenge111')
+    assert.equal(recordName, '_acme-challenge')
     assert.equal(typeof order, 'object')
     assert.equal(order.status, 'pending')
     assert.deepEqual(order.identifiers, [ { type: 'dns', value: 'website.com' } ])
