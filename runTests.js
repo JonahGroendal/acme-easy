@@ -7,12 +7,15 @@ function test(name, fn) {
 async function run(defineTests) {
   defineTests()
 
+  aTestFailed = false
+
   for (let i=0; i<tests.length; i++) {
     try {
       // Wait for resolve if its a promise
 			await (async () => tests[i].fn())()
 			console.log('✅', tests[i].name)
 		} catch (e) {
+      aTestFailed = true
 			console.log('❌', tests[i].name)
 			// log the stack of the error
 			console.log(e.stack)
@@ -20,6 +23,9 @@ async function run(defineTests) {
   }
   console.log()
   console.log('done.')
+
+  if (aTestFailed)
+    process.exit(1);
 }
 
 exports.run = run
