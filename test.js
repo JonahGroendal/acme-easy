@@ -10,7 +10,7 @@ const setTimeout = require('timers/promises').setTimeout
 const { run, test } = require('./runTests.js')
 const AcmeClient = require('./index.js')
 
-let apiToken = require('./cloudfare.json')
+let apiToken
 try {
   const cloudfare = require('./cloudfare.json')
   apiToken = cloudfare.token
