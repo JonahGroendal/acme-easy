@@ -12,7 +12,8 @@ const AcmeClient = require('./index.js')
 
 let apiToken = require('./cloudfare.json')
 try {
-  apiToken = require('./cloudfare.json').token
+  const cloudfare = require('./cloudfare.json')
+  apiToken = cloudfare.token
 } catch {
   // If CI, token will be environment variable set by the github action
   apiToken = process.env.CLOUDFARE_API_TOKEN
