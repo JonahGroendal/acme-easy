@@ -350,7 +350,7 @@ function arrayBufferToBase64Url(buf) {
 
 function throwIfErrored(resJson) {
   if (typeof resJson.status === 'number' && resJson.status >= 400)
-    throw new Error(resJson.detail)
+    throw new Error(JSON.stringify(resJson))
 }
 
 /**
