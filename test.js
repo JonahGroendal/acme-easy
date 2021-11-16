@@ -106,7 +106,7 @@ function setTXTRecord(recordName, recordText) {
     console.log('created new record '.concat(body.result.id))
   })
   .then(() => {
-    console.log("waiting 45 minutes for changes to take effect...")
-    return setTimeout(45*60*1000) // returns a Promise
+    console.log("waiting 30 minutes for changes to take effect...")
+    return setTimeout(30*60*1000) // returns a Promise
   })
 }
