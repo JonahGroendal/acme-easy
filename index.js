@@ -25,6 +25,7 @@ async function AcmeClient(authority, jwk=null) {
     async requestDnsChallenge(domainName) {
       let order;
       let authorization;
+      nonce = await getNewNonce(directory);
       ({ nonce, order } = await postNewOrder(nonce, jwk, directory, accountUrl, domainName));
       ({ nonce, authorization } = await getOrderAuthorization(nonce, jwk, accountUrl, order));
       const challenge = authorization.challenges.filter(c => c.type === "dns-01")[0];
@@ -36,6 +37,7 @@ async function AcmeClient(authority, jwk=null) {
     },
     async submitDnsChallengeAndFinalize(order) {
       let authorization;
+      nonce = await getNewNonce(directory);
       ({ nonce, authorization } = await getOrderAuthorization(nonce, jwk, accountUrl, order));
       const challenge = authorization.challenges.filter(c => c.type === "dns-01")[0]
       nonce = await postOrderChallenge(nonce, jwk, directory, accountUrl, challenge, order);
