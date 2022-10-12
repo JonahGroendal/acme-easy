@@ -20,6 +20,10 @@
   ],
   "author": "Jonah Groendal",
   "license": "MIT",
+  "files": [
+    "!test.js",
+    "!runTests.js"
+  ],
   "bugs": {
     "url": "https://github.com/JonahGroendal/acme-easy/issues"
   },
