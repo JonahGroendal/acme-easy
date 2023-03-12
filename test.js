@@ -89,7 +89,7 @@ function setTXTRecord(recordName, recordText) {
     return fetch(dnsRecordsUrl, {
       body: JSON.stringify({
         "type": "TXT",
-        "name": recordName.concat('.jongr.xyz'),
+        "name": recordName.concat(domainName),
         "content": recordText,
         "ttl":60,
         "priority":10,
