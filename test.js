@@ -9,6 +9,7 @@ const setTimeout = require('timers/promises').setTimeout
 
 const { run, test } = require('./runTests.js')
 const AcmeClient = require('./index.js')
+const domainName = 'jontest.xyz'
 
 let apiToken
 try {
@@ -35,13 +36,13 @@ run(() => {
 
   test('should request a DNS challenge', async () => {
     ac = await AcmeClient('letsencrypt-staging');
-    ({ recordName, recordText, order } = await ac.requestDnsChallenge('jongr.xyz'));
+    ({ recordName, recordText, order } = await ac.requestDnsChallenge(domainName));
 
     assert.equal(recordName, '_acme-challenge')
     assert.equal(typeof recordText, 'string')
     assert.equal(typeof order, 'object')
     assert.equal(order.status, 'pending')
-    assert.deepEqual(order.identifiers, [ { type: 'dns', value: 'jongr.xyz' } ])
+    assert.deepEqual(order.identifiers, [ { type: 'dns', value: domainName } ])
   })
 
   test('should complete the DNS challenge', async () => {
@@ -61,14 +62,14 @@ run(() => {
 })
 
 
-// Set a TXT record for jongr.xyz using Cloudfare's API
+// Set a TXT record for jontest.xyz using Cloudfare's API
 function setTXTRecord(recordName, recordText) {
   const dnsRecordsUrl = "https://api.cloudflare.com/client/v4/zones/14cffda055ab3f9d0d2350da7ff72b1d/dns_records"
   const headers = {
     "Content-Type": "application/json",
     Authorization: "Bearer ".concat(apiToken)
   }
-  return fetch(dnsRecordsUrl.concat("?type=TXT&name=", recordName, ".jongr.xyz&page=1&per_page=100&order=type&direction=desc&match=all"), {
+  return fetch(dnsRecordsUrl.concat("?type=TXT&name=", recordName, ".", domainName, "&page=1&per_page=100&order=type&direction=desc&match=all"), {
     headers
   })
   .then(res => res.json())
