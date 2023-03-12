@@ -10,6 +10,7 @@ const setTimeout = require('timers/promises').setTimeout
 const { run, test } = require('./runTests.js')
 const AcmeClient = require('./index.js')
 const domainName = 'jontest.xyz'
+const zoneId = 'cff587a5d09d98acbe42b74b3827aa6e'
 
 let apiToken
 try {
@@ -64,7 +65,7 @@ run(() => {
 
 // Set a TXT record for jontest.xyz using Cloudfare's API
 function setTXTRecord(recordName, recordText) {
-  const dnsRecordsUrl = "https://api.cloudflare.com/client/v4/zones/14cffda055ab3f9d0d2350da7ff72b1d/dns_records"
+  const dnsRecordsUrl = "https://api.cloudflare.com/client/v4/zones/".concat(zoneId, "/dns_records")
   const headers = {
     "Content-Type": "application/json",
     Authorization: "Bearer ".concat(apiToken)
