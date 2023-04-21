@@ -31,9 +31,5 @@
   "homepage": "https://github.com/JonahGroendal/acme-easy#readme",
   "dependencies": {
     "node-forge": "^0.10.0"
-  },
-  "devDependencies": {
-    "btoa": "^1.2.1",
-    "node-fetch": "^2.6.5"
   }
 }
