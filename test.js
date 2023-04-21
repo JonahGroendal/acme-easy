@@ -1,26 +1,20 @@
 // import and set global polyfills
-global.fetch = require("node-fetch")
-global.window = {}
-global.window.crypto = require('crypto').webcrypto
-global.window.btoa = require('btoa')
+import assert from 'node:assert/strict'
+import {setTimeout} from 'node:timers/promises'
+import process from 'node:process'
 
-const assert = require('assert').strict
-const setTimeout = require('timers/promises').setTimeout
+import { run, test } from './runTests.js'
+import AcmeClient from './index.js'
 
-const { run, test } = require('./runTests.js')
-const AcmeClient = require('./index.js')
 const domainName = 'jontest.xyz'
 const zoneId = 'cff587a5d09d98acbe42b74b3827aa6e'
 
-let apiToken
-try {
-  const cloudfare = require('./cloudfare.json')
-  apiToken = cloudfare.token
-} catch {
-  // If CI, token will be environment variable set by the github action
-  apiToken = process.env.CLOUDFARE_API_TOKEN
-}
-
+const apiToken = await import('./cloudfare.json', { assert: { type: 'json' } })
+  .then(
+    cf => cf.token,
+    // If CI, token will be environment variable set by the github action
+    () => process.env.CLOUDFARE_API_TOKEN
+  )
 
 run(() => {
   test('should create an AcmeClient object', async () => {
@@ -64,15 +58,19 @@ run(() => {
 
 
 // Set a TXT record for jontest.xyz using Cloudfare's API
-function setTXTRecord(recordName, recordText) {
+async function setTXTRecord(recordName, recordText) {
   const dnsRecordsUrl = "https://api.cloudflare.com/client/v4/zones/".concat(zoneId, "/dns_records")
   const headers = {
-    "Content-Type": "application/json",
-    Authorization: "Bearer ".concat(apiToken)
+    'Content-Type': "application/json",
+    'Authorization': "Bearer ".concat(apiToken)
   }
-  return fetch(dnsRecordsUrl.concat("?type=TXT&name=", recordName, ".", domainName, "&page=1&per_page=100&order=type&direction=desc&match=all"), {
-    headers
-  })
+  return fetch(dnsRecordsUrl.concat(
+    "?type=TXT&name=",
+    recordName,
+    ".",
+    domainName,
+    "&page=1&per_page=100&order=type&direction=desc&match=all"
+  ), { headers })
   .then(res => res.json())
   .then(body => {
     if (!body.success) {

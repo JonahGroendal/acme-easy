@@ -3,6 +3,7 @@
   "version": "1.1.2",
   "description": "An ACME client for the browser that authenticates via DNS-01 challenge and supports LetsEncrypt by default.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "node test.js"
   },

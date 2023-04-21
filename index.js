@@ -1,87 +1,84 @@
-const forge = require('node-forge')
+import forge from 'node-forge'
+
+const { crypto } = globalThis
 
 const authorities = {
-  "letsencrypt": "https://acme-v02.api.letsencrypt.org",
-  "letsencrypt-staging": "https://acme-staging-v02.api.letsencrypt.org"
+  letsencrypt: 'https://acme-v02.api.letsencrypt.org',
+  'letsencrypt-staging': 'https://acme-staging-v02.api.letsencrypt.org'
 }
 
-async function AcmeClient(authority, jwk=null) {
-  let directory;
-  let nonce;
-  let accountUrl;
+async function AcmeClient (authority, jwk = null) {
+  let nonce
+  let accountUrl
 
-  if (Object.keys(authorities).includes(authority.toLowerCase()))
-    authority = authorities[authority.toLowerCase()]
-  directory = await (await fetch(authority + '/directory')).json();
-  nonce = await getNewNonce(directory);
+  if (Object.keys(authorities).includes(authority.toLowerCase())) { authority = authorities[authority.toLowerCase()] }
+  const directory = await (await fetch(authority + '/directory')).json()
+  nonce = await getNewNonce(directory)
   if (jwk === null) {
     jwk = await generateJwk();
-    ({ nonce, accountUrl } = await postNewAccount(nonce, jwk, directory)); // Create new account
+    ({ nonce, accountUrl } = await postNewAccount(nonce, jwk, directory)) // Create new account
   } else {
-    ({ nonce, accountUrl } = await postNewAccount(nonce, jwk, directory, { onlyReturnExisting: true })); // Login to existing account
+    ({ nonce, accountUrl } = await postNewAccount(nonce, jwk, directory, { onlyReturnExisting: true })) // Login to existing account
   }
   // Public functions:
   return {
-    async requestDnsChallenge(domainName) {
-      let order;
-      let authorization;
+    async requestDnsChallenge (domainName) {
+      let order
+      let authorization
       nonce = await getNewNonce(directory);
       ({ nonce, order } = await postNewOrder(nonce, jwk, directory, accountUrl, domainName));
-      ({ nonce, authorization } = await getOrderAuthorization(nonce, jwk, accountUrl, order));
-      const challenge = authorization.challenges.filter(c => c.type === "dns-01")[0];
+      ({ nonce, authorization } = await getOrderAuthorization(nonce, jwk, accountUrl, order))
+      const challenge = authorization.challenges.filter(c => c.type === 'dns-01')[0]
       return {
         recordName: '_acme-challenge',
         recordText: await calculateRecordText(challenge.token, jwk),
         order
-      };
+      }
     },
-    async submitDnsChallengeAndFinalize(order) {
-      let authorization;
+    async submitDnsChallengeAndFinalize (order) {
+      let authorization
       nonce = await getNewNonce(directory);
-      ({ nonce, authorization } = await getOrderAuthorization(nonce, jwk, accountUrl, order));
-      const challenge = authorization.challenges.filter(c => c.type === "dns-01")[0]
-      nonce = await postOrderChallenge(nonce, jwk, directory, accountUrl, challenge, order);
-      const domainName = authorization.identifier.value;
-      const { csr, pkcs8Key } = generateCsr(domainName);
+      ({ nonce, authorization } = await getOrderAuthorization(nonce, jwk, accountUrl, order))
+      const challenge = authorization.challenges.filter(c => c.type === 'dns-01')[0]
+      nonce = await postOrderChallenge(nonce, jwk, directory, accountUrl, challenge, order)
+      const domainName = authorization.identifier.value
+      const { csr, pkcs8Key } = generateCsr(domainName)
       let certUrl;
-      ({ nonce, certUrl } = await postOrderFinalize(nonce, jwk, accountUrl, order, csr));
+      ({ nonce, certUrl } = await postOrderFinalize(nonce, jwk, accountUrl, order, csr))
       let pemCertChain;
-      ({ nonce, pemCertChain} = await getPemCertChain(nonce, jwk, accountUrl, certUrl))
+      ({ nonce, pemCertChain } = await getPemCertChain(nonce, jwk, accountUrl, certUrl))
       return {
         pemCertChain,
         pkcs8Key
-      };
+      }
     },
-    exportJwk() {
-      return jwk;
+    exportJwk () {
+      return jwk
     }
   }
 }
 
-module.exports = AcmeClient
-
-async function getNewNonce(directory) {
+async function getNewNonce (directory) {
   const res = await fetch(directory.newNonce, {
-    method: "HEAD"
+    method: 'HEAD'
   })
   return res.headers.get('Replay-Nonce')
 }
 
-
-async function getOrderAuthorization(nonce, jwk, accountUrl, order) {
+async function getOrderAuthorization (nonce, jwk, accountUrl, order) {
   const header = {
-    alg: "ES256",
+    alg: 'ES256',
     kid: accountUrl,
-    nonce: nonce,
+    nonce,
     url: order.authorizations[0]
   }
-  const payload = ""
+  const payload = ''
 
   const jwt = await jwtFromJson(jwk, header, payload)
 
   const res = await fetch(order.authorizations[0], {
-    method: "POST", // A POST-AS-GET request
-    headers: { "Content-Type": "application/jose+json" },
+    method: 'POST', // A POST-AS-GET request
+    headers: { 'Content-Type': 'application/jose+json' },
     body: JSON.stringify(parseJwt(jwt))
   })
   const authorization = await res.json()
@@ -94,16 +91,15 @@ async function getOrderAuthorization(nonce, jwk, accountUrl, order) {
   }
 }
 
-
-async function postNewAccount(nonce, jwk, directory, options={ onlyReturnExisting: false }) {
+async function postNewAccount (nonce, jwk, directory, options = { onlyReturnExisting: false }) {
   const pubJwk = {
-    "crv": jwk.crv,
-    "kty": jwk.kty,
-    "x": jwk.x,
-    "y": jwk.y,
+    crv: jwk.crv,
+    kty: jwk.kty,
+    x: jwk.x,
+    y: jwk.y
   }
   const header = {
-    nonce: nonce,
+    nonce,
     url: directory.newAccount,
     alg: 'ES256',
     jwk: pubJwk
@@ -115,9 +111,9 @@ async function postNewAccount(nonce, jwk, directory, options={ onlyReturnExistin
   const jwt = await jwtFromJson(jwk, header, payload)
 
   const res = await fetch(directory.newAccount, {
-    mode: "cors",
-    method: "POST",
-    headers: { "Content-Type": "application/jose+json" },
+    mode: 'cors',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/jose+json' },
     body: JSON.stringify(parseJwt(jwt))
   })
 
@@ -129,24 +125,21 @@ async function postNewAccount(nonce, jwk, directory, options={ onlyReturnExistin
   }
 }
 
-
-
-
-async function postNewOrder(nonce, jwk, directory, accountUrl, domainName) {
+async function postNewOrder (nonce, jwk, directory, accountUrl, domainName) {
   const header = {
-    alg: "ES256",
+    alg: 'ES256',
     kid: accountUrl,
-    nonce: nonce,
+    nonce,
     url: directory.newOrder
   }
   const payload = {
-    identifiers: [{ "type": "dns", "value": domainName }]
+    identifiers: [{ type: 'dns', value: domainName }]
   }
   const jwt = await jwtFromJson(jwk, header, payload)
 
-  let res = await fetch(directory.newOrder, {
-    method: "POST",
-    headers: { "Content-Type": "application/jose+json" },
+  const res = await fetch(directory.newOrder, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/jose+json' },
     body: JSON.stringify(parseJwt(jwt))
   })
   const order = await res.json()
@@ -159,21 +152,20 @@ async function postNewOrder(nonce, jwk, directory, accountUrl, domainName) {
   }
 }
 
-
-async function postOrderChallenge(nonce, jwk, directory, accountUrl, challenge, order) {
+async function postOrderChallenge (nonce, jwk, directory, accountUrl, challenge, order) {
   const header = {
     alg: 'ES256',
     kid: accountUrl,
-    nonce: nonce,
+    nonce,
     url: challenge.url
   }
   const payload = {}
 
   const jwt = await jwtFromJson(jwk, header, payload)
 
-  let res = await fetch(challenge.url, {
-    method: "POST",
-    headers: { "Content-Type": "application/jose+json" },
+  const res = await fetch(challenge.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/jose+json' },
     body: JSON.stringify(parseJwt(jwt))
   })
 
@@ -182,20 +174,19 @@ async function postOrderChallenge(nonce, jwk, directory, accountUrl, challenge, 
   return res.headers.get('Replay-Nonce')
 }
 
-
-async function postOrderFinalize(nonce, jwk, accountUrl, order, csr) {
+async function postOrderFinalize (nonce, jwk, accountUrl, order, csr) {
   const header = {
-    alg: "ES256",
+    alg: 'ES256',
     kid: accountUrl,
-    nonce: nonce,
+    nonce,
     url: order.finalize
   }
   const payload = { csr }
   const jwt = await jwtFromJson(jwk, header, payload)
 
   const res = await fetch(order.finalize, {
-    method: "POST",
-    headers: { "Content-Type": "application/jose+json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/jose+json' },
     body: JSON.stringify(parseJwt(jwt))
   })
   const body = await res.json()
@@ -208,28 +199,27 @@ async function postOrderFinalize(nonce, jwk, accountUrl, order, csr) {
   }
 }
 
-async function getPemCertChain(nonce, jwk, accountUrl, certUrl) {
+async function getPemCertChain (nonce, jwk, accountUrl, certUrl) {
   const header = {
-    alg: "ES256",
+    alg: 'ES256',
     kid: accountUrl,
-    nonce: nonce,
+    nonce,
     url: certUrl
   }
-  const payload = ""
+  const payload = ''
 
   const jwt = await jwtFromJson(jwk, header, payload)
 
   const res = await fetch(certUrl, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/jose+json",
-      "Accept": "application/pem-certificate-chain"
+      'Content-Type': 'application/jose+json',
+      Accept: 'application/pem-certificate-chain'
     },
     body: JSON.stringify(parseJwt(jwt))
   })
 
-  if (res.status >= 400)
-    throw new Error(res.statusText)
+  if (res.status >= 400) { throw new Error(res.statusText) }
 
   const pemCertChain = parsePemCertChain(await res.text())
 
@@ -239,49 +229,48 @@ async function getPemCertChain(nonce, jwk, accountUrl, certUrl) {
   }
 }
 
-
-async function generateJwk() {
-  const keyPair = await window.crypto.subtle.generateKey(
-    { name: "ECDSA", namedCurve: "P-256" },
+async function generateJwk () {
+  const keyPair = await crypto.subtle.generateKey(
+    { name: 'ECDSA', namedCurve: 'P-256' },
     true,
-    [ 'sign', 'verify' ]
+    ['sign', 'verify']
   )
-  return await window.crypto.subtle.exportKey('jwk', keyPair.privateKey)
+  return await crypto.subtle.exportKey('jwk', keyPair.privateKey)
 }
 
-async function calculateRecordText(token, jwk) {
+async function calculateRecordText (token, jwk) {
   const keyAuthorization = token + '.' + (await thumbprint(jwk))
-  const hash = await window.crypto.subtle.digest(
-    { name: "SHA-256", },
+  const hash = await crypto.subtle.digest(
+    { name: 'SHA-256' },
     (new TextEncoder()).encode(keyAuthorization)
   )
   return arrayBufferToBase64Url(hash)
 }
 
-async function thumbprint(jwk) {
+async function thumbprint (jwk) {
   const pubJwk = {
     crv: jwk.crv,
     kty: jwk.kty,
     x: jwk.x,
     y: jwk.y
   }
-  const hash = await window.crypto.subtle.digest(
-    { name: "SHA-256" },
+  const hash = await crypto.subtle.digest(
+    { name: 'SHA-256' },
     (new TextEncoder()).encode(JSON.stringify(pubJwk))
   )
 
-  return arrayBufferToBase64Url(hash);
+  return arrayBufferToBase64Url(hash)
 }
 
-function generateCsr(domainName) {
-  let keys = forge.pki.rsa.generateKeyPair(2048);
+function generateCsr (domainName) {
+  const keys = forge.pki.rsa.generateKeyPair(2048)
 
-  let csr = forge.pki.createCertificationRequest();
-  csr.publicKey = keys.publicKey;
+  const csr = forge.pki.createCertificationRequest()
+  csr.publicKey = keys.publicKey
   csr.setSubject([{
     name: 'commonName',
     value: domainName
-  }]);
+  }])
   csr.setAttributes([{
     name: 'extensionRequest',
     extensions: [{
@@ -309,14 +298,14 @@ function generateCsr(domainName) {
   }
 }
 
-async function jwtFromJson(jwk, header, payload) {
-  const privateKey = await window.crypto.subtle.importKey(
-    'jwk', jwk, { name: "ECDSA", namedCurve: "P-256"}, false, ['sign']
+async function jwtFromJson (jwk, header, payload) {
+  const privateKey = await crypto.subtle.importKey(
+    'jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']
   )
   const base64Header = jsonToBase64Url(header)
-  const base64Payload = payload === '' ? "" : jsonToBase64Url(payload)
-  const base64Signature = arrayBufferToBase64Url(await window.crypto.subtle.sign(
-    { name: "ECDSA", hash: { name: "SHA-256" } },
+  const base64Payload = payload === '' ? '' : jsonToBase64Url(payload)
+  const base64Signature = arrayBufferToBase64Url(await crypto.subtle.sign(
+    { name: 'ECDSA', hash: { name: 'SHA-256' } },
     privateKey,
     (new TextEncoder()).encode(base64Header + '.' + base64Payload)
   ))
@@ -324,7 +313,7 @@ async function jwtFromJson(jwk, header, payload) {
   return base64Header + '.' + base64Payload + '.' + base64Signature
 }
 
-function parseJwt(jwt) {
+function parseJwt (jwt) {
   const jwtParts = jwt.split('.')
   return {
     protected: jwtParts[0],
@@ -333,15 +322,15 @@ function parseJwt(jwt) {
   }
 }
 
-function jsonToBase64Url(json) {
-  return window.btoa(JSON.stringify(json))
+function jsonToBase64Url (json) {
+  return btoa(JSON.stringify(json))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/g, '')
 }
 
-function arrayBufferToBase64Url(buf) {
-  return window.btoa(Array.prototype.map.call(
+function arrayBufferToBase64Url (buf) {
+  return btoa(Array.prototype.map.call(
     new Uint8Array(buf),
     (ch) => String.fromCharCode(ch)
   ).join(''))
@@ -350,16 +339,15 @@ function arrayBufferToBase64Url(buf) {
     .replace(/=+$/g, '')
 }
 
-function throwIfErrored(resJson) {
-  if (typeof resJson.status === 'number' && resJson.status >= 400)
-    throw new Error(JSON.stringify(resJson))
+function throwIfErrored (resJson) {
+  if (typeof resJson.status === 'number' && resJson.status >= 400) { throw new Error(JSON.stringify(resJson)) }
 }
 
 /**
  * @param {string} pemCertChain
  */
-function parsePemCertChain(pemCertChain) {
-  let parsed = []
+function parsePemCertChain (pemCertChain) {
+  const parsed = []
   let startIndex = pemCertChain.indexOf('-----BEGIN CERTIFICATE-----')
   let endIndex
   while (startIndex !== -1) {
@@ -369,3 +357,5 @@ function parsePemCertChain(pemCertChain) {
   }
   return parsed
 }
+
+export default AcmeClient
