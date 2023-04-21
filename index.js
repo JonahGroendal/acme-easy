@@ -3,23 +3,28 @@ import forge from 'node-forge'
 const { crypto } = globalThis
 
 const authorities = {
-  letsencrypt: 'https://acme-v02.api.letsencrypt.org',
+  'letsencrypt': 'https://acme-v02.api.letsencrypt.org',
   'letsencrypt-staging': 'https://acme-staging-v02.api.letsencrypt.org'
 }
 
 async function AcmeClient (authority, jwk = null) {
-  let nonce
   let accountUrl
 
-  if (Object.keys(authorities).includes(authority.toLowerCase())) { authority = authorities[authority.toLowerCase()] }
-  const directory = await (await fetch(authority + '/directory')).json()
-  nonce = await getNewNonce(directory)
+  if (Object.keys(authorities).includes(authority.toLowerCase())) {
+    authority = authorities[authority.toLowerCase()]
+  }
+
+  const res = await fetch(authority + '/directory')
+  const directory = await res.json()
+  let nonce = await getNewNonce(directory)
+
   if (jwk === null) {
     jwk = await generateJwk();
     ({ nonce, accountUrl } = await postNewAccount(nonce, jwk, directory)) // Create new account
   } else {
     ({ nonce, accountUrl } = await postNewAccount(nonce, jwk, directory, { onlyReturnExisting: true })) // Login to existing account
   }
+
   // Public functions:
   return {
     async requestDnsChallenge (domainName) {
@@ -35,6 +40,7 @@ async function AcmeClient (authority, jwk = null) {
         order
       }
     },
+
     async submitDnsChallengeAndFinalize (order) {
       let authorization
       nonce = await getNewNonce(directory);
@@ -47,11 +53,13 @@ async function AcmeClient (authority, jwk = null) {
       ({ nonce, certUrl } = await postOrderFinalize(nonce, jwk, accountUrl, order, csr))
       let pemCertChain;
       ({ nonce, pemCertChain } = await getPemCertChain(nonce, jwk, accountUrl, certUrl))
+
       return {
         pemCertChain,
         pkcs8Key
       }
     },
+
     exportJwk () {
       return jwk
     }
@@ -315,6 +323,7 @@ async function jwtFromJson (jwk, header, payload) {
 
 function parseJwt (jwt) {
   const jwtParts = jwt.split('.')
+
   return {
     protected: jwtParts[0],
     payload: jwtParts[1],
@@ -332,7 +341,7 @@ function jsonToBase64Url (json) {
 function arrayBufferToBase64Url (buf) {
   return btoa(Array.prototype.map.call(
     new Uint8Array(buf),
-    (ch) => String.fromCharCode(ch)
+    ch => String.fromCharCode(ch)
   ).join(''))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
