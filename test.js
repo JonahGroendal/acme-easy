@@ -90,7 +90,7 @@ function setTXTRecord(recordName, recordText) {
     return fetch(dnsRecordsUrl, {
       body: JSON.stringify({
         "type": "TXT",
-        "name": recordName.concat(domainName),
+        "name": recordName.concat(".", domainName),
         "content": recordText,
         "ttl":60,
         "priority":10,
@@ -108,7 +108,7 @@ function setTXTRecord(recordName, recordText) {
     console.log('created new record '.concat(body.result.id))
   })
   .then(() => {
-    console.log("waiting 1 hour for changes to take effect...")
-    return setTimeout(60*60*1000) // returns a Promise
+    console.log("waiting 10 minutes for changes to take effect...")
+    return setTimeout(10*60*1000) // returns a Promise
   })
 }
