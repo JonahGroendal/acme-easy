@@ -2,6 +2,8 @@ import forge from 'node-forge'
 
 const { crypto } = globalThis
 
+const POLL_DELAY = 5000
+
 const authorities = {
   'letsencrypt': 'https://acme-v02.api.letsencrypt.org',
   'letsencrypt-staging': 'https://acme-staging-v02.api.letsencrypt.org'
@@ -44,13 +46,20 @@ async function AcmeClient (authority, jwk = null) {
     async submitDnsChallengeAndFinalize (order) {
       let authorization
       nonce = await getNewNonce(directory);
-      ({ nonce, authorization } = await getOrderAuthorization(nonce, jwk, accountUrl, order))
-      const challenge = authorization.challenges.filter(c => c.type === 'dns-01')[0]
-      nonce = await postOrderChallenge(nonce, jwk, directory, accountUrl, challenge, order)
-      const domainName = authorization.identifier.value
-      const { csr, pkcs8Key } = generateCsr(domainName)
+
+      ({ nonce, authorization } = await getOrderAuthorization(nonce, jwk, accountUrl, order));
+      const challenge = authorization.challenges.filter(c => c.type === "dns-01")[0];
+      ({ nonce } = await postOrderChallenge(nonce, jwk, directory, accountUrl, challenge, order));
+      const domainName = authorization.identifier.value;
+      const { csr, pkcs8Key } = generateCsr(domainName);
       let certUrl;
-      ({ nonce, certUrl } = await postOrderFinalize(nonce, jwk, accountUrl, order, csr))
+      ({ nonce, orderUrl, certUrl } = await postOrderFinalize(nonce, jwk, accountUrl, order, csr));
+      while (!certUrl) {
+        // poll for certificate
+        await new Promise(r => setTimeout(r, POLL_DELAY));
+        ({ nonce, certUrl } = await getOrder(nonce, jwk, accountUrl, orderUrl));
+      }
+
       let pemCertChain;
       ({ nonce, pemCertChain } = await getPemCertChain(nonce, jwk, accountUrl, certUrl))
 
@@ -129,7 +138,7 @@ async function postNewAccount (nonce, jwk, directory, options = { onlyReturnExis
 
   return {
     nonce: res.headers.get('Replay-Nonce'),
-    accountUrl: res.headers.get('Location')
+    accountUrl: res.headers.get('location')
   }
 }
 
@@ -179,7 +188,10 @@ async function postOrderChallenge (nonce, jwk, directory, accountUrl, challenge,
 
   throwIfErrored(await res.json())
 
-  return res.headers.get('Replay-Nonce')
+  return {
+    nonce: res.headers.get('Replay-Nonce'),
+    authUrl: res.headers.get('location')
+  }
 }
 
 async function postOrderFinalize (nonce, jwk, accountUrl, order, csr) {
@@ -203,11 +215,13 @@ async function postOrderFinalize (nonce, jwk, accountUrl, order, csr) {
 
   return {
     nonce: res.headers.get('Replay-Nonce'),
+    orderUrl: res.headers.get('location'),
     certUrl: body.certificate
   }
 }
 
-async function getPemCertChain (nonce, jwk, accountUrl, certUrl) {
+
+async function getPemCertChain(nonce, jwk, accountUrl, certUrl) {
   const header = {
     alg: 'ES256',
     kid: accountUrl,

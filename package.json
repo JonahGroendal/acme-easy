@@ -1,11 +1,12 @@
 {
   "name": "acme-easy",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "An ACME client for the browser that authenticates via DNS-01 challenge and supports LetsEncrypt by default.",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "node test.js"
+    "test": "node test.js",
+    "publish": "npm publish"
   },
   "repository": {
     "type": "git",
