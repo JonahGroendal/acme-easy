@@ -1,32 +1,30 @@
 const tests = []
 
-function test(name, fn) {
+function test (name, fn) {
   tests.push({ name, fn })
 }
 
-async function run(defineTests) {
+async function run (defineTests) {
   defineTests()
 
-  aTestFailed = false
+  let aTestFailed = false
 
-  for (let i=0; i<tests.length; i++) {
+  for (let i = 0; i < tests.length; i++) {
     try {
       // Wait for resolve if its a promise
-			await (async () => tests[i].fn())()
-			console.log('✅', tests[i].name)
-		} catch (e) {
+      await (async () => tests[i].fn())()
+      console.log('✅', tests[i].name)
+    } catch (e) {
       aTestFailed = true
-			console.log('❌', tests[i].name)
-			// log the stack of the error
-			console.log(e.stack)
-		}
+      console.log('❌', tests[i].name)
+      // log the stack of the error
+      console.log(e.stack)
+    }
   }
   console.log()
   console.log('done.')
 
-  if (aTestFailed)
-    process.exit(1);
+  if (aTestFailed) { process.exit(1) }
 }
 
-exports.run = run
-exports.test = test
+export { test, run }
