@@ -1,11 +1,8 @@
-// import and set global polyfills
-global.fetch = require("node-fetch")
-global.window = {}
-global.window.crypto = require('crypto').webcrypto
-global.window.btoa = require('btoa')
+const process = require('node:process')
+globalThis.crypto ??= require('node:crypto').webcrypto
 
-const assert = require('assert').strict
-const setTimeout = require('timers/promises').setTimeout
+const assert = require('node:assert/strict')
+const setTimeout = require('node:timers/promises').setTimeout
 
 const { run, test } = require('./runTests.js')
 const AcmeClient = require('./index.js')
